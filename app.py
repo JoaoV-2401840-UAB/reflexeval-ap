@@ -196,7 +196,7 @@ ANALYTICS_SCHEMA = {
 @app.route("/")
 def home():
     return jsonify({
-        "autores": [
+        "autor": [
             "João Valadares - UAb - 2401840",
         ],
         "message": "ReflexEval AP – AP operacional",
