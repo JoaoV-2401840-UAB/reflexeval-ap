@@ -210,7 +210,9 @@ def home():
             "analyticsList": "/analytics/list",
             "analyticsGet": "/analytics/get"
         }
-    })
+    }
+    json_str = json.dumps(payload, ensure_ascii=False)
+    return Response(json_str, mimetype="application/json; charset=utf-8")
 
 
 
