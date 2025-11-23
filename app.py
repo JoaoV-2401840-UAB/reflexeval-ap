@@ -215,9 +215,24 @@ def get_config():
     return jsonify(config)
 
 
-@app.post("/deploy")
+@app.route("/deploy", methods=["GET", "POST"])
 def deploy():
     """Equivalente a json_deploy_url."""
+    if request.method == "GET":
+        # Resposta amigável para quem acede pelo browser
+        return jsonify({
+            "message": "Use POST com JSON para fazer deploy da atividade.",
+            "example": {
+                "method": "POST",
+                "url": "/deploy",
+                "body": {
+                    "user_id": "u1",
+                    "plan_id": "p1"
+                }
+            }
+        })
+
+    # Se for POST, faz o comportamento normal
     data = request.json or {}
     user_id = data.get("user_id", "demo-user")
     plan_id = data.get("plan_id", "demo-plan")
@@ -228,6 +243,7 @@ def deploy():
         "initial_state": "ready"
     }
     return jsonify(response)
+
 
 
 @app.get("/analytics/list")
