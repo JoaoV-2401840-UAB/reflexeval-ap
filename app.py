@@ -2,7 +2,6 @@ import os
 from flask import Flask, jsonify, request
 
 app = Flask(__name__)
-app.config['JSON_AS_ASCII'] = False
 
 # ====== JSON de configuração (params) ======
 
@@ -210,9 +209,7 @@ def home():
             "analyticsList": "/analytics/list",
             "analyticsGet": "/analytics/get"
         }
-    }
-    json_str = json.dumps(payload, ensure_ascii=False)
-    return Response(json_str, mimetype="application/json; charset=utf-8")
+    })
 
 
 
