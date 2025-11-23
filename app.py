@@ -1,6 +1,12 @@
 import os
 from flask import Flask, jsonify, request
 
+from session_factory import (
+    InMemoryConfigProvider,
+    StandardSessionFactory,
+    SessionService,
+)
+
 app = Flask(__name__)
 
 # ====== JSON de configuração (params) ======
