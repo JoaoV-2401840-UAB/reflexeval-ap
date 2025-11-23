@@ -105,6 +105,11 @@ PARAMS_SCHEMA = {
     ]
 }
 
+# ====== Factory Method: serviços de sessão de reflexão ======
+config_provider = InMemoryConfigProvider(PARAMS_SCHEMA)
+session_factory = StandardSessionFactory()
+session_service = SessionService(config_provider, session_factory)
+
 ANALYTICS_SCHEMA = {
     "schema_version": "1.0",
     "events": [
@@ -266,7 +271,6 @@ def deploy():
     return jsonify(response)
 
 
-
 @app.get("/analytics/list")
 def analytics_list():
     """Equivalente a analytics_list_url."""
@@ -302,6 +306,31 @@ def analytics_get():
         ]
     }
     return jsonify(data)
+
+
+@app.get("/debug/session")
+def debug_session():
+    """
+    Endpoint de teste para demonstrar o padrão Factory Method em ação.
+    Exemplo: /debug/session?planId=demo-plan&sessionIndex=1
+    """
+    plan_id = request.args.get("planId", "demo-plan")
+    try:
+        session_index = int(request.args.get("sessionIndex", "1"))
+    except ValueError:
+        session_index = 1
+
+    vm = session_service.start_session(plan_id=plan_id, session_index=session_index)
+
+    return jsonify({
+        "plan_id": vm.plan_id,
+        "session_index": vm.session_index,
+        "session_type": vm.session_type,
+        "title": vm.title,
+        "intro": vm.intro,
+        "questions": vm.questions,
+        "criteria_weights": vm.criteria_weights,
+    })
 
 
 if __name__ == "__main__":
