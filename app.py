@@ -146,6 +146,17 @@ PARAMS_SCHEMA = {
     ]
 }
 
+PARAMS_SCHEMA_FOR_FACTORY = {
+    "params": [
+        {
+            "name": f["name"],
+            "type": f["type"],
+            "default": f.get("default")
+        }
+        for f in PARAMS_SCHEMA.get("fields", [])
+    ]
+}
+
 # ====== JSON de analytics list ======
 
 ANALYTICS_SCHEMA = {
@@ -295,7 +306,7 @@ def analytics_get():
 
 # ====== Factory Method (Semana 4) — Session Service ======
 
-config_provider = InMemoryConfigProvider(PARAMS_SCHEMA)
+config_provider = InMemoryConfigProvider(PARAMS_SCHEMA_FOR_FACTORY)
 factory = StandardSessionFactory()
 session_service = SessionService(factory=factory, config_provider=config_provider)
 
