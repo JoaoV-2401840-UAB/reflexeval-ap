@@ -1,9 +1,10 @@
 import os
+import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Protocol, DefaultDict
 from collections import defaultdict
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template_string
 
 from session_factory import (
     InMemoryConfigProvider,
@@ -11,8 +12,9 @@ from session_factory import (
     SessionService,
 )
 
-
-# ====== Padrão Comportamental: Observer (Publish–Subscribe) ======
+# =============================================================================
+# Padrão Comportamental: Observer (Publish–Subscribe)
+# =============================================================================
 
 @dataclass(frozen=True)
 class DomainEvent:
@@ -39,7 +41,7 @@ class EventBus:
 
 
 class InMemoryAnalyticsRepository:
-    """Repo simples para suportar /analytics/get."""
+    """Repo simples para suportar /analytics/get (eventos)."""
 
     def __init__(self) -> None:
         self._events: List[Dict[str, Any]] = []
@@ -71,6 +73,10 @@ class MetricsObserver:
         self.counts[event.name] = self.counts.get(event.name, 0) + 1
 
 
+# =============================================================================
+# App
+# =============================================================================
+
 app = Flask(__name__)
 
 # ====== Observer setup ======
@@ -83,7 +89,9 @@ for ev in ["activity_deployed", "session_started", "session_submitted"]:
     event_bus.subscribe(ev, analytics_observer)
     event_bus.subscribe(ev, metrics_observer)
 
-# ====== JSON de configuração (params) ======
+# =============================================================================
+# Schemas (Inven!RA)
+# =============================================================================
 
 PARAMS_SCHEMA = {
     "schema_version": "1.0",
@@ -146,18 +154,17 @@ PARAMS_SCHEMA = {
     ]
 }
 
+# Adapter interno: converte "fields" (Inven!RA) para "params" (session_factory)
 PARAMS_SCHEMA_FOR_FACTORY = {
     "params": [
         {
             "name": f["name"],
             "type": f["type"],
-            "default": f.get("default")
+            "default": f.get("default"),
         }
         for f in PARAMS_SCHEMA.get("fields", [])
     ]
 }
-
-# ====== JSON de analytics list ======
 
 ANALYTICS_SCHEMA = {
     "schema_version": "1.0",
@@ -209,7 +216,99 @@ ANALYTICS_SCHEMA = {
     ]
 }
 
-# ====== Serviços (Inven!RA) ======
+# =============================================================================
+# UI HTML (para corrigir o feedback: página de configuração em HTML)
+# =============================================================================
+
+CONFIG_UI_HTML = """
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ReflexEval — Configuração</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 40px; max-width: 980px; }
+    h1 { margin: 0 0 8px; }
+    .muted { color: #555; margin: 0 0 18px; }
+    .links { margin: 12px 0 18px; }
+    .links a { margin-right: 12px; }
+    label { display:block; font-weight:600; margin-top: 14px; }
+    input, textarea { width: 100%; padding: 10px; margin-top: 6px; box-sizing: border-box; }
+    .row { display:grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    button { margin-top: 18px; padding: 10px 14px; cursor:pointer; }
+    pre { background:#f6f6f6; padding:12px; overflow:auto; }
+    .card { border: 1px solid #e5e5e5; border-radius: 12px; padding: 14px; margin-top: 14px; }
+  </style>
+</head>
+<body>
+  <h1>ReflexEval — Página de Configuração</h1>
+  <div class="muted">
+    Página HTML para configurar a atividade e gerar o JSON esperado pelo serviço <b>/config/create</b>.
+  </div>
+
+  <div class="links">
+    <a href="/" target="_blank">/</a>
+    <a href="/params/get" target="_blank">/params/get</a>
+    <a href="/analytics/list" target="_blank">/analytics/list</a>
+    <a href="/deploy" target="_blank">/deploy (GET)</a>
+    <a href="/analytics/get" target="_blank">/analytics/get</a>
+    <a href="/debug/session" target="_blank">/debug/session</a>
+  </div>
+
+  <form method="post" action="/config/ui">
+    <label>plan_id</label>
+    <input name="plan_id" value="{{ defaults.plan_id }}" />
+
+    <div class="row">
+      <div>
+        <label>course_name</label>
+        <input name="course_name" value="{{ defaults.course_name }}" />
+      </div>
+      <div>
+        <label>num_sessions</label>
+        <input name="num_sessions" type="number" min="1" max="10" value="{{ defaults.num_sessions }}" />
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>reflection_interval_days</label>
+        <input name="reflection_interval_days" type="number" min="1" max="30" value="{{ defaults.reflection_interval_days }}" />
+      </div>
+      <div>
+        <label>deadline_utc</label>
+        <input name="deadline_utc" value="{{ defaults.deadline_utc }}" />
+      </div>
+    </div>
+
+    <label>criteria (uma por linha)</label>
+    <textarea name="criteria" rows="4">{{ defaults.criteria_text }}</textarea>
+
+    <label>weights (JSON)</label>
+    <textarea name="weights" rows="4">{{ defaults.weights_json }}</textarea>
+
+    <button type="submit">Gerar JSON e simular /config/create</button>
+  </form>
+
+  {% if payload %}
+    <div class="card">
+      <h2>Payload gerado</h2>
+      <pre>{{ payload }}</pre>
+    </div>
+
+    <div class="card">
+      <h2>Resposta simulada do /config/create</h2>
+      <pre>{{ response }}</pre>
+    </div>
+  {% endif %}
+</body>
+</html>
+"""
+
+# =============================================================================
+# Serviços (Inven!RA)
+# =============================================================================
 
 @app.route("/")
 def index():
@@ -219,10 +318,11 @@ def index():
         "endpoints": [
             "/params/get",
             "/config/create",
+            "/config/ui (GET/POST)  [HTML]",
             "/deploy (GET/POST)",
             "/analytics/list",
             "/analytics/get",
-            "/debug/session"
+            "/debug/session",
         ]
     })
 
@@ -240,7 +340,7 @@ def config_create():
     plan_id = data.get("plan_id", "demo-plan")
     config = data.get("config", {})
 
-    # Aqui numa versão real guardaríamos em BD. Para demo, só devolve.
+    # Numa versão real guardaríamos em BD. Para demo, apenas devolve.
     return jsonify({
         "plan_id": plan_id,
         "stored_config": config,
@@ -248,32 +348,109 @@ def config_create():
     })
 
 
+@app.get("/config/ui")
+def config_ui_get():
+    # Defaults a partir do schema (se quiseres, podes ir buscar sempre ao PARAMS_SCHEMA)
+    defaults = {
+        "plan_id": "demo-plan",
+        "course_name": "APS",
+        "num_sessions": 3,
+        "reflection_interval_days": 7,
+        "deadline_utc": "2026-01-31T23:59:59Z",
+        "criteria_text": "Clareza\nProfundidade\nConsistência\nEvidência",
+        "weights_json": '{"Clareza":0.25,"Profundidade":0.25,"Consistência":0.25,"Evidência":0.25}',
+    }
+    return render_template_string(CONFIG_UI_HTML, defaults=defaults)
+
+
+@app.post("/config/ui")
+def config_ui_post():
+    plan_id = request.form.get("plan_id", "demo-plan")
+    course_name = request.form.get("course_name", "APS")
+
+    try:
+        num_sessions = int(request.form.get("num_sessions", "3"))
+    except ValueError:
+        num_sessions = 3
+
+    try:
+        reflection_interval_days = int(request.form.get("reflection_interval_days", "7"))
+    except ValueError:
+        reflection_interval_days = 7
+
+    deadline_utc = request.form.get("deadline_utc", "2026-01-31T23:59:59Z")
+
+    criteria = [
+        c.strip()
+        for c in (request.form.get("criteria", "") or "").splitlines()
+        if c.strip()
+    ]
+
+    weights_raw = request.form.get("weights", "{}") or "{}"
+    try:
+        weights = json.loads(weights_raw)
+    except json.JSONDecodeError:
+        weights = {}
+
+    payload_obj = {
+        "plan_id": plan_id,
+        "config": {
+            "course_name": course_name,
+            "num_sessions": num_sessions,
+            "reflection_interval_days": reflection_interval_days,
+            "deadline_utc": deadline_utc,
+            "criteria": criteria,
+            "weights": weights,
+        }
+    }
+
+    # Simula resposta do /config/create (não faz HTTP interno)
+    response_obj = {
+        "plan_id": plan_id,
+        "stored_config": payload_obj["config"],
+        "status": "created"
+    }
+
+    defaults = {
+        "plan_id": plan_id,
+        "course_name": course_name,
+        "num_sessions": num_sessions,
+        "reflection_interval_days": reflection_interval_days,
+        "deadline_utc": deadline_utc,
+        "criteria_text": "\n".join(criteria) if criteria else "",
+        "weights_json": json.dumps(weights, ensure_ascii=False),
+    }
+
+    return render_template_string(
+        CONFIG_UI_HTML,
+        defaults=defaults,
+        payload=json.dumps(payload_obj, indent=2, ensure_ascii=False),
+        response=json.dumps(response_obj, indent=2, ensure_ascii=False),
+    )
+
+
 @app.route("/deploy", methods=["GET", "POST"])
 def deploy():
     """Equivalente a json_deploy_url."""
     if request.method == "GET":
-        # Resposta amigável para quem acede pelo browser
         return jsonify({
             "message": "Use POST com JSON para fazer deploy da atividade.",
             "example": {
                 "method": "POST",
                 "url": "/deploy",
-                "body": {
-                    "user_id": "u1",
-                    "plan_id": "p1"
-                }
+                "body": {"user_id": "u1", "plan_id": "p1"}
             }
         })
 
-    # Se for POST, faz o comportamento normal
     data = request.json or {}
     user_id = data.get("user_id", "demo-user")
     plan_id = data.get("plan_id", "demo-plan")
     instance_id = f"instance-{plan_id}-{user_id}"
+
     response = {
         "instance_id": instance_id,
         "activity_url": f"https://reflexeval.example/{instance_id}",
-        "initial_state": "ready"
+        "initial_state": "ready",
     }
 
     # Evento interno (Observer)
@@ -293,10 +470,8 @@ def analytics_list():
 
 @app.get("/analytics/get")
 def analytics_get():
-    """Equivalente a analytics_get_url (agora devolve eventos reais do AP)."""
+    """Equivalente a analytics_get_url (devolve eventos reais do AP)."""
     instance_id = request.args.get("instance_id", "instance-demo")
-
-    # Dados reais (eventos publicados pelos endpoints do AP)
     return jsonify({
         "instance_id": instance_id,
         "events": analytics_repo.list_all(),
@@ -304,7 +479,9 @@ def analytics_get():
     })
 
 
-# ====== Factory Method (Semana 4) — Session Service ======
+# =============================================================================
+# Factory Method — Session Service
+# =============================================================================
 
 config_provider = InMemoryConfigProvider(PARAMS_SCHEMA_FOR_FACTORY)
 factory = StandardSessionFactory()
