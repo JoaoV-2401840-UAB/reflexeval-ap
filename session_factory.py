@@ -3,7 +3,6 @@ from dataclasses import dataclass, field
 from typing import List, Dict, Protocol
 from abc import ABC, abstractmethod
 
-
 @dataclass
 class PlanConfig:
     """
@@ -45,7 +44,6 @@ class PlanConfig:
             criteria_weights=weights,
             reflection_prompts=reflection_prompts,
         )
-
 
 @dataclass
 class ReflectionSessionViewModel:
@@ -100,7 +98,6 @@ class ReflectionSession(ABC):
             criteria_weights=self.plan_config.criteria_weights,
         )
 
-
 class InitialReflectionSession(ReflectionSession):
     def get_session_type(self) -> str:
         return "initial"
@@ -114,7 +111,6 @@ class InitialReflectionSession(ReflectionSession):
             "Regista expectativas, ponto de partida e objetivos pessoais."
         )
 
-
 class IntermediateReflectionSession(ReflectionSession):
     def get_session_type(self) -> str:
         return "intermediate"
@@ -127,7 +123,6 @@ class IntermediateReflectionSession(ReflectionSession):
             "Sessão de reflexão intermédia. "
             "Foca-te nas dificuldades recentes e na evolução desde a última sessão."
         )
-
 
 class FinalReflectionSession(ReflectionSession):
     def get_session_type(self) -> str:
@@ -149,7 +144,6 @@ class FinalReflectionSession(ReflectionSession):
             "Se repetisses a unidade curricular, o que farias de forma diferente?",
         ]
         return base + extra
-
 
 class SessionFactory(ABC):
     """
@@ -176,7 +170,6 @@ class StandardSessionFactory(SessionFactory):
         else:
             return FinalReflectionSession(plan_config, session_index)
 
-
 class IConfigProvider(Protocol):
     """
     Porto abstrato para obter PlanConfig (permite trocar origem da config).
@@ -197,7 +190,6 @@ class InMemoryConfigProvider:
 
     def get_plan_config(self, plan_id: str) -> PlanConfig:
         return PlanConfig.from_params_schema(plan_id, self._params_schema)
-
 
 class SessionService:
     """
