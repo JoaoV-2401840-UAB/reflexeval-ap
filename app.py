@@ -282,7 +282,7 @@ CONFIG_UI_HTML = """
       </div>
     </div>
 
-    <label>criteria (uma por linha)</label>
+    <label>criteria (um por linha)</label>
     <textarea name="criteria" rows="4">{{ defaults.criteria_text }}</textarea>
 
     <label>weights (JSON)</label>
