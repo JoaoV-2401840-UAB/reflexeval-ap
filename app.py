@@ -3,9 +3,7 @@ import json
 from dataclasses import dataclass
 from typing import Any, Dict, List, Protocol, DefaultDict
 from collections import defaultdict
-
 from flask import Flask, jsonify, request, render_template_string
-
 from session_factory import (
     InMemoryConfigProvider,
     StandardSessionFactory,
@@ -13,7 +11,7 @@ from session_factory import (
 )
 
 # =============================================================================
-# Padrão Comportamental: Observer (Publish–Subscribe)
+# Padrão Comportamental: Observer
 # =============================================================================
 
 @dataclass(frozen=True)
@@ -21,10 +19,8 @@ class DomainEvent:
     name: str
     payload: Dict[str, Any]
 
-
 class Observer(Protocol):
     def update(self, event: DomainEvent) -> None: ...
-
 
 class EventBus:
     """Subject do padrão Observer."""
@@ -39,7 +35,6 @@ class EventBus:
         for obs in self._subscribers.get(event.name, []):
             obs.update(event)
 
-
 class InMemoryAnalyticsRepository:
     """Repo simples para suportar /analytics/get (eventos)."""
 
@@ -51,7 +46,6 @@ class InMemoryAnalyticsRepository:
 
     def list_all(self) -> List[Dict[str, Any]]:
         return list(self._events)
-
 
 class AnalyticsStoreObserver:
     """Observer que persiste eventos."""
@@ -71,7 +65,6 @@ class MetricsObserver:
 
     def update(self, event: DomainEvent) -> None:
         self.counts[event.name] = self.counts.get(event.name, 0) + 1
-
 
 # =============================================================================
 # App
@@ -217,7 +210,7 @@ ANALYTICS_SCHEMA = {
 }
 
 # =============================================================================
-# UI HTML (para corrigir o feedback: página de configuração em HTML)
+# UI HTML (página de configuração em HTML)
 # =============================================================================
 
 CONFIG_UI_HTML = """
@@ -326,7 +319,6 @@ def index():
         ]
     })
 
-
 @app.get("/params/get")
 def params_get():
     """Equivalente a json_params_url."""
@@ -347,10 +339,9 @@ def config_create():
         "status": "created"
     })
 
-
 @app.get("/config/ui")
 def config_ui_get():
-    # Defaults a partir do schema (se quiseres, podes ir buscar sempre ao PARAMS_SCHEMA)
+    # Defaults a partir do schema
     defaults = {
         "plan_id": "demo-plan",
         "course_name": "APS",
@@ -361,7 +352,6 @@ def config_ui_get():
         "weights_json": '{"Clareza":0.25,"Profundidade":0.25,"Consistência":0.25,"Evidência":0.25}',
     }
     return render_template_string(CONFIG_UI_HTML, defaults=defaults)
-
 
 @app.post("/config/ui")
 def config_ui_post():
@@ -404,7 +394,7 @@ def config_ui_post():
         }
     }
 
-    # Simula resposta do /config/create (não faz HTTP interno)
+    # Simula resposta do /config/create
     response_obj = {
         "plan_id": plan_id,
         "stored_config": payload_obj["config"],
@@ -427,7 +417,6 @@ def config_ui_post():
         payload=json.dumps(payload_obj, indent=2, ensure_ascii=False),
         response=json.dumps(response_obj, indent=2, ensure_ascii=False),
     )
-
 
 @app.route("/deploy", methods=["GET", "POST"])
 def deploy():
@@ -461,7 +450,6 @@ def deploy():
 
     return jsonify(response)
 
-
 @app.get("/analytics/list")
 def analytics_list():
     """Equivalente a analytics_list_url."""
@@ -477,7 +465,6 @@ def analytics_get():
         "events": analytics_repo.list_all(),
         "metrics": metrics_observer.counts
     })
-
 
 # =============================================================================
 # Factory Method — Session Service
@@ -521,7 +508,6 @@ def debug_session():
         "questions": vm.questions,
         "criteria_weights": vm.criteria_weights,
     })
-
 
 if __name__ == "__main__":
     # Para desenvolvimento local (Render define PORT)
