@@ -295,7 +295,7 @@ def analytics_get():
 
 # ====== Factory Method (Semana 4) — Session Service ======
 
-config_provider = InMemoryConfigProvider()
+config_provider = InMemoryConfigProvider(PARAMS_SCHEMA)
 factory = StandardSessionFactory()
 session_service = SessionService(factory=factory, config_provider=config_provider)
 
