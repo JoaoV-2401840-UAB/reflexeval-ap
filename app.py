@@ -37,7 +37,7 @@ def create_app() -> Flask:
     analytics_service = AnalyticsQueryService(analytics_repo, metrics_observer)
     session_app_service = SessionApplicationService(session_service, event_bus)
 
-    # ====== Rotas (fina camada de entrada) ======
+    # ====== Rotas ======
 
     @app.get("/")
     def index():
@@ -58,7 +58,6 @@ def create_app() -> Flask:
 
     @app.get("/home")
     def home():
-        # Landing page HTML (navegação rápida)
         return render_landing_page()
 
     @app.get("/params/get")
