@@ -8,9 +8,17 @@ from session_factory import (
 )
 
 from infrastructure.eventing import build_default_event_bus
-from infrastructure.schemas import PARAMS_SCHEMA, PARAMS_SCHEMA_FOR_FACTORY, ANALYTICS_SCHEMA
-from application.services import ActivityDeployService, AnalyticsQueryService, SessionApplicationService
-from ui.pages import render_landing_page
+from infrastructure.schemas import (
+    PARAMS_SCHEMA,
+    PARAMS_SCHEMA_FOR_FACTORY,
+    ANALYTICS_SCHEMA,
+)
+from application.services import (
+    ActivityDeployService,
+    AnalyticsQueryService,
+    SessionApplicationService,
+)
+from ui.pages import render_config_ui, render_landing_page
 
 
 def create_app() -> Flask:
@@ -31,32 +39,28 @@ def create_app() -> Flask:
 
     # ====== Rotas (fina camada de entrada) ======
 
-    
     @app.get("/")
     def index():
-        # Se o pedido vier de um browser, mostrar HTML; senão manter JSON
-        if request.accept_mimetypes.accept_html and not request.accept_mimetypes.accept_json:
-            return render_landing_page()
-
         return jsonify({
             "name": "ReflexEval Activity Provider",
             "status": "ok",
             "endpoints": [
+                "/home  [HTML]",
                 "/params/get",
                 "/config/create",
                 "/config/ui (GET/POST)  [HTML]",
                 "/deploy (GET/POST)",
                 "/analytics/list",
                 "/analytics/get",
-                "/debug/session"
+                "/debug/session",
             ]
         })
 
     @app.get("/home")
     def home():
+        # Landing page HTML (navegação rápida)
         return render_landing_page()
 
-    
     @app.get("/params/get")
     def params_get():
         return jsonify(PARAMS_SCHEMA)
