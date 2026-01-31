@@ -10,7 +10,7 @@ from session_factory import (
 from infrastructure.eventing import build_default_event_bus
 from infrastructure.schemas import PARAMS_SCHEMA, PARAMS_SCHEMA_FOR_FACTORY, ANALYTICS_SCHEMA
 from application.services import ActivityDeployService, AnalyticsQueryService, SessionApplicationService
-from ui.pages import render_config_ui, render_landing_page
+from ui.pages import render_landing_page
 
 
 def create_app() -> Flask:
@@ -51,7 +51,11 @@ def index():
         ]
     })
 
+    @app.get("/home")
+    def home():
+        return render_landing_page()
 
+    
     @app.get("/params/get")
     def params_get():
         return jsonify(PARAMS_SCHEMA)
