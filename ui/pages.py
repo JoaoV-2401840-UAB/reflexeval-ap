@@ -91,3 +91,53 @@ def _safe_parse_json(txt: str):
 def _pretty_json(obj) -> str:
     import json
     return json.dumps(obj, ensure_ascii=False, indent=2)
+
+def render_landing_page() -> str:
+    return render_template_string("""
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ReflexEval — Activity Provider</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 40px; max-width: 920px; }
+    h1 { margin: 0 0 6px; }
+    .muted { color: #555; margin: 0 0 18px; }
+    ul { line-height: 1.9; }
+    a { text-decoration: none; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+  </style>
+</head>
+<body>
+  <h1>ReflexEval — Activity Provider</h1>
+  <p class="muted">
+    Página de navegação rápida para testes e validação manual dos serviços.
+  </p>
+
+  <h2>Configuração</h2>
+  <ul>
+    <li><a href="/params/get"><code>/params/get</code></a> — schema de configuração</li>
+    <li><a href="/config/ui"><code>/config/ui</code></a> — UI HTML de configuração</li>
+    <li><code>POST /config/create</code> — criar/guardar configuração (JSON)</li>
+  </ul>
+
+  <h2>Deploy e Analytics</h2>
+  <ul>
+    <li><a href="/deploy"><code>/deploy</code></a> — GET com exemplo; POST faz deploy</li>
+    <li><a href="/analytics/list"><code>/analytics/list</code></a> — schema de analytics</li>
+    <li><a href="/analytics/get"><code>/analytics/get</code></a> — eventos e métricas recolhidas</li>
+  </ul>
+
+  <h2>Demonstração</h2>
+  <ul>
+    <li><a href="/debug/session"><code>/debug/session</code></a> — Factory Method (sessões)</li>
+  </ul>
+
+  <hr/>
+  <p class="muted">
+    Nota: para clientes API, <code>/</code> continua a devolver JSON (Accept: application/json).
+  </p>
+</body>
+</html>
+""")
