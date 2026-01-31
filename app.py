@@ -31,25 +31,26 @@ def create_app() -> Flask:
 
     # ====== Rotas (fina camada de entrada) ======
 
+    
     @app.get("/")
-def index():
-    # Se o pedido vier de um browser, mostrar HTML; senão manter JSON
-    if request.accept_mimetypes.accept_html and not request.accept_mimetypes.accept_json:
-        return render_landing_page()
+    def index():
+        # Se o pedido vier de um browser, mostrar HTML; senão manter JSON
+        if request.accept_mimetypes.accept_html and not request.accept_mimetypes.accept_json:
+            return render_landing_page()
 
-    return jsonify({
-        "name": "ReflexEval Activity Provider",
-        "status": "ok",
-        "endpoints": [
-            "/params/get",
-            "/config/create",
-            "/config/ui (GET/POST)  [HTML]",
-            "/deploy (GET/POST)",
-            "/analytics/list",
-            "/analytics/get",
-            "/debug/session"
-        ]
-    })
+        return jsonify({
+            "name": "ReflexEval Activity Provider",
+            "status": "ok",
+            "endpoints": [
+                "/params/get",
+                "/config/create",
+                "/config/ui (GET/POST)  [HTML]",
+                "/deploy (GET/POST)",
+                "/analytics/list",
+                "/analytics/get",
+                "/debug/session"
+            ]
+        })
 
     @app.get("/home")
     def home():
