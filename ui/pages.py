@@ -141,3 +141,45 @@ def render_landing_page() -> str:
 </body>
 </html>
 """)
+
+LANDING_TEMPLATE = """
+<!doctype html>
+<html lang="pt">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>ReflexEval — Home</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
+    .box { max-width: 900px; margin: 0 auto; }
+    ul { line-height: 1.9; }
+    a { text-decoration: none; }
+    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
+    .muted { color: #555; font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+<div class="box">
+  <h1>ReflexEval — Activity Provider</h1>
+  <p class="muted">Página de navegação rápida para testes manuais.</p>
+
+  <h2>Links úteis</h2>
+  <ul>
+    <li><a href="/params/get"><code>/params/get</code></a> — schema de configuração</li>
+    <li><a href="/config/ui"><code>/config/ui</code></a> — UI HTML de configuração</li>
+    <li><a href="/deploy"><code>/deploy</code></a> — GET com exemplo; POST faz deploy</li>
+    <li><a href="/analytics/list"><code>/analytics/list</code></a> — schema de analytics</li>
+    <li><a href="/analytics/get"><code>/analytics/get</code></a> — eventos/métricas recolhidas</li>
+    <li><a href="/debug/session"><code>/debug/session</code></a> — Factory Method (sessões)</li>
+  </ul>
+
+  <p class="muted">
+    Nota: o endpoint <code>/</code> mantém resposta JSON para clientes API.
+  </p>
+</div>
+</body>
+</html>
+"""
+
+def render_landing_page() -> str:
+    return render_template_string(LANDING_TEMPLATE)
