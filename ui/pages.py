@@ -4,6 +4,10 @@ from typing import Any, Dict
 from flask import render_template_string, request
 
 
+# =============================================================================
+# Config UI
+# =============================================================================
+
 CONFIG_UI_TEMPLATE = """
 <!doctype html>
 <html lang="pt">
@@ -65,11 +69,18 @@ def render_config_ui(params_schema: Dict[str, Any]) -> str:
     user_id = request.form.get("user_id", "") if request.method == "POST" else ""
 
     default_config = {f["name"]: f.get("default") for f in params_schema.get("fields", [])}
-    config_json = request.form.get("config_json") if request.method == "POST" else _pretty_json(default_config)
+    config_json = (
+        request.form.get("config_json")
+        if request.method == "POST"
+        else _pretty_json(default_config)
+    )
 
     payload = None
     if request.method == "POST":
-        payload = _pretty_json({"plan_id": plan_id, "config": _safe_parse_json(config_json)})
+        payload = _pretty_json({
+            "plan_id": plan_id,
+            "config": _safe_parse_json(config_json)
+        })
 
     return render_template_string(
         CONFIG_UI_TEMPLATE,
@@ -80,20 +91,11 @@ def render_config_ui(params_schema: Dict[str, Any]) -> str:
     )
 
 
-def _safe_parse_json(txt: str):
-    import json
-    try:
-        return json.loads(txt)
-    except Exception:
-        return {"_error": "JSON inválido", "_raw": txt}
+# =============================================================================
+# Landing Page
+# =============================================================================
 
-
-def _pretty_json(obj) -> str:
-    import json
-    return json.dumps(obj, ensure_ascii=False, indent=2)
-
-def render_landing_page() -> str:
-    return render_template_string("""
+LANDING_TEMPLATE = """
 <!doctype html>
 <html lang="pt">
 <head>
@@ -119,67 +121,46 @@ def render_landing_page() -> str:
   <ul>
     <li><a href="/params/get"><code>/params/get</code></a> — schema de configuração</li>
     <li><a href="/config/ui"><code>/config/ui</code></a> — UI HTML de configuração</li>
-    <li><code>POST /config/create</code> — criar/guardar configuração (JSON)</li>
+    <li><code>POST /config/create</code> — criar/guardar configuração</li>
   </ul>
 
   <h2>Deploy e Analytics</h2>
   <ul>
     <li><a href="/deploy"><code>/deploy</code></a> — GET com exemplo; POST faz deploy</li>
     <li><a href="/analytics/list"><code>/analytics/list</code></a> — schema de analytics</li>
-    <li><a href="/analytics/get"><code>/analytics/get</code></a> — eventos e métricas recolhidas</li>
+    <li><a href="/analytics/get"><code>/analytics/get</code></a> — eventos e métricas</li>
   </ul>
 
   <h2>Demonstração</h2>
   <ul>
-    <li><a href="/debug/session"><code>/debug/session</code></a> — Factory Method (sessões)</li>
+    <li><a href="/debug/session"><code>/debug/session</code></a> — Factory Method</li>
   </ul>
 
   <hr/>
   <p class="muted">
-    Nota: para clientes API, <code>/</code> continua a devolver JSON (Accept: application/json).
+    Nota: o endpoint <code>/</code> continua a devolver JSON para clientes API.
   </p>
-</body>
-</html>
-""")
-
-LANDING_TEMPLATE = """
-<!doctype html>
-<html lang="pt">
-<head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>ReflexEval — Home</title>
-  <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial; margin: 24px; }
-    .box { max-width: 900px; margin: 0 auto; }
-    ul { line-height: 1.9; }
-    a { text-decoration: none; }
-    code { background: #f6f6f6; padding: 2px 6px; border-radius: 6px; }
-    .muted { color: #555; font-size: 0.95rem; }
-  </style>
-</head>
-<body>
-<div class="box">
-  <h1>ReflexEval — Activity Provider</h1>
-  <p class="muted">Página de navegação rápida para testes manuais.</p>
-
-  <h2>Links úteis</h2>
-  <ul>
-    <li><a href="/params/get"><code>/params/get</code></a> — schema de configuração</li>
-    <li><a href="/config/ui"><code>/config/ui</code></a> — UI HTML de configuração</li>
-    <li><a href="/deploy"><code>/deploy</code></a> — GET com exemplo; POST faz deploy</li>
-    <li><a href="/analytics/list"><code>/analytics/list</code></a> — schema de analytics</li>
-    <li><a href="/analytics/get"><code>/analytics/get</code></a> — eventos/métricas recolhidas</li>
-    <li><a href="/debug/session"><code>/debug/session</code></a> — Factory Method (sessões)</li>
-  </ul>
-
-  <p class="muted">
-    Nota: o endpoint <code>/</code> mantém resposta JSON para clientes API.
-  </p>
-</div>
 </body>
 </html>
 """
 
+
 def render_landing_page() -> str:
     return render_template_string(LANDING_TEMPLATE)
+
+
+# =============================================================================
+# Helpers
+# =============================================================================
+
+def _safe_parse_json(txt: str):
+    import json
+    try:
+        return json.loads(txt)
+    except Exception:
+        return {"_error": "JSON inválido", "_raw": txt}
+
+
+def _pretty_json(obj) -> str:
+    import json
+    return json.dumps(obj, ensure_ascii=False, indent=2)
