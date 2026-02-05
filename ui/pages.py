@@ -122,6 +122,7 @@ LANDING_TEMPLATE = """
     <li><a href="/params/get"><code>/params/get</code></a> — schema de configuração</li>
     <li><a href="/config/ui"><code>/config/ui</code></a> — UI HTML de configuração</li>
     <li><code>POST /config/create</code> — criar/guardar configuração</li>
+     <li><a href="/config/get?plan_id=demo-plan"><code>/config/get</code></a> — ver configuração guardada (demo-plan)</li>
   </ul>
 
   <h2>Deploy e Analytics</h2>
