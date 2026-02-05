@@ -1,6 +1,6 @@
 import os
 from flask import Flask, jsonify, request
-
+from infrastructure.config_repo import InMemoryPlanConfigRepository
 from session_factory import (
     InMemoryConfigProvider,
     StandardSessionFactory,
@@ -17,6 +17,8 @@ from application.services import (
     ActivityDeployService,
     AnalyticsQueryService,
     SessionApplicationService,
+    ConfigCommandService,
+    ConfigQueryService,
 )
 from ui.pages import render_config_ui, render_landing_page
 
@@ -28,14 +30,19 @@ def create_app() -> Flask:
     event_bus, analytics_repo, metrics_observer = build_default_event_bus()
 
     # ====== Factory Method wiring (sessões) ======
-    config_provider = InMemoryConfigProvider(PARAMS_SCHEMA_FOR_FACTORY)
+    config_provider = InMemoryConfigProvider(PARAMS_SCHEMA_FOR_FACTORY, plan_config_repo)
     factory = StandardSessionFactory()
     session_service = SessionService(factory=factory, config_provider=config_provider)
 
+    # ====== Config repo (per plan_id) ======
+    plan_config_repo = InMemoryPlanConfigRepository()
+    
     # ====== Application services ======
     deploy_service = ActivityDeployService(event_bus)
     analytics_service = AnalyticsQueryService(analytics_repo, metrics_observer)
     session_app_service = SessionApplicationService(session_service, event_bus)
+    config_cmd = ConfigCommandService(plan_config_repo)
+    config_qry = ConfigQueryService(plan_config_repo)
 
     # ====== Rotas ======
 
@@ -68,13 +75,14 @@ def create_app() -> Flask:
     def config_create():
         data = request.json or {}
         plan_id = data.get("plan_id", "demo-plan")
-        config = data.get("config", {})
-        return jsonify({
-            "plan_id": plan_id,
-            "stored_config": config,
-            "status": "created"
-        })
-
+        config = data.get("config", {}) or {}
+        return jsonify(config_cmd.create_or_update(plan_id, config))
+    
+    @app.get("/config/get")
+    def config_get():
+        plan_id = request.args.get("plan_id", "demo-plan")
+        return jsonify(config_qry.get(plan_id))
+    
     @app.route("/config/ui", methods=["GET", "POST"])
     def config_ui():
         return render_config_ui(PARAMS_SCHEMA)
