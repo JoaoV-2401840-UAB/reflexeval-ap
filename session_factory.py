@@ -184,15 +184,44 @@ class IConfigProvider(Protocol):
 
 class InMemoryConfigProvider:
     """
-    Implementação simples de IConfigProvider, usada para integrar com o PARAMS_SCHEMA
-    do app.py sem base de dados.
+    Integra schema (defaults) + config guardada por plano (overrides).
     """
-
-    def __init__(self, params_schema: dict) -> None:
+    def __init__(self, params_schema: dict, plan_config_repo=None) -> None:
         self._params_schema = params_schema
+        self._repo = plan_config_repo  # pode ser None
 
     def get_plan_config(self, plan_id: str) -> PlanConfig:
-        return PlanConfig.from_params_schema(plan_id, self._params_schema)
+        base = PlanConfig.from_params_schema(plan_id, self._params_schema)
+
+        if not self._repo:
+            return base
+
+        overrides = self._repo.get(plan_id) or {}
+        if not isinstance(overrides, dict) or not overrides:
+            return base
+
+        # aplicar overrides no objeto base (apenas os campos que existem)
+        if "num_sessions" in overrides:
+            base.sessions_number = int(overrides["num_sessions"])
+        if "reflection_interval_days" in overrides:
+            base.reflection_interval_days = int(overrides["reflection_interval_days"])
+        if "deadline_utc" in overrides:
+            base.deadline_utc = str(overrides["deadline_utc"])
+
+        criteria = overrides.get("criteria")
+        weights = overrides.get("weights")
+
+        if isinstance(criteria, list):
+            # se critérios vierem, e weights não, gera uniformes
+            if not isinstance(weights, dict) or not weights:
+                w = 1.0 / float(len(criteria)) if criteria else 1.0
+                base.criteria_weights = {c: w for c in criteria}
+            else:
+                base.criteria_weights = {k: float(v) for k, v in weights.items()}
+        elif isinstance(weights, dict) and weights:
+            base.criteria_weights = {k: float(v) for k, v in weights.items()}
+
+        return base
 
 class SessionService:
     """
