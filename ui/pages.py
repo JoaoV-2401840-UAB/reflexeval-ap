@@ -27,10 +27,14 @@ CONFIG_UI_TEMPLATE = """
 </head>
 <body>
 <div class="box">
-  <h1>ReflexEval — Configuração</h1>
-  <p class="muted">
-    Esta página gera um payload para <code>POST /config/create</code>.
-  </p>
+  <div class="muted" style="margin: 10px 0 16px;">
+    <b>Fluxo rápido:</b>
+     <ol style="margin: 8px 0 0 18px;">
+  <li>Gerar o JSON abaixo e enviar para <code>POST /config/create</code></li>
+  <li>Confirmar que ficou guardado em <code>GET /config/get?plan_id=...</code></li>
+  <li>Testar o efeito no Factory Method em <code>GET /debug/session?planId=...&sessionIndex=1</code></li>
+ </ol>
+</div>
 
   <form method="post">
     <div class="row">
