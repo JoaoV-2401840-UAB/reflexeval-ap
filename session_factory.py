@@ -19,30 +19,33 @@ class PlanConfig:
     @classmethod
     def from_params_schema(cls, plan_id: str, params_schema: dict) -> "PlanConfig":
         """
-        Constrói um PlanConfig a partir do PARAMS_SCHEMA do app.py.
-        Usa apenas os campos relevantes para o padrão de criação.
+        Constrói PlanConfig a partir do schema interno (params).
+        NOTA: este schema vem do Adapter fields->params (PARAMS_SCHEMA_FOR_FACTORY).
         """
         params = {p["name"]: p for p in params_schema.get("params", [])}
 
-        sessions_number = int(params.get("sessions_number", {}).get("default", 3))
+        num_sessions = int(params.get("num_sessions", {}).get("default", 3))
         reflection_interval_days = int(params.get("reflection_interval_days", {}).get("default", 7))
         deadline_utc = params.get("deadline_utc", {}).get("default", "2099-12-31T23:59:00Z")
 
-        # pesos dos critérios
-        criteria_param = params.get("criteria", {})
-        items = criteria_param.get("items", [])
-        weights = {item["name"]: float(item.get("weight", 1.0)) for item in items}
+        # criteria: lista
+        criteria = params.get("criteria", {}).get("default", []) or []
 
-        # perguntas de reflexão definidas no schema
-        reflection_prompts = params.get("reflection_prompts", {}).get("default", [])
+        # weights: dict criterion -> weight
+        weights = params.get("weights", {}).get("default", {}) or {}
+
+        # Se não houver weights definidos, distribuir pesos uniformes pelos critérios
+        if (not isinstance(weights, dict) or not weights) and criteria:
+            w = 1.0 / float(len(criteria))
+            weights = {c: w for c in criteria}
 
         return cls(
             plan_id=plan_id,
-            sessions_number=sessions_number,
+            sessions_number=num_sessions,  # mantemos nome interno
             reflection_interval_days=reflection_interval_days,
             deadline_utc=deadline_utc,
-            criteria_weights=weights,
-            reflection_prompts=reflection_prompts,
+            criteria_weights={k: float(v) for k, v in (weights or {}).items()},
+            reflection_prompts=[],  # neste schema atual não tens prompts
         )
 
 @dataclass
