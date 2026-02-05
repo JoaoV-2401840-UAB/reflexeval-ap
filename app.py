@@ -29,13 +29,14 @@ def create_app() -> Flask:
     # ====== Eventing (Observer) wiring ======
     event_bus, analytics_repo, metrics_observer = build_default_event_bus()
 
+    # ====== Config repo (per plan_id) ======
+    plan_config_repo = InMemoryPlanConfigRepository()
+    
     # ====== Factory Method wiring (sessões) ======
+    plan_config_repo = InMemoryPlanConfigRepository()
     config_provider = InMemoryConfigProvider(PARAMS_SCHEMA_FOR_FACTORY, plan_config_repo)
     factory = StandardSessionFactory()
     session_service = SessionService(factory=factory, config_provider=config_provider)
-
-    # ====== Config repo (per plan_id) ======
-    plan_config_repo = InMemoryPlanConfigRepository()
     
     # ====== Application services ======
     deploy_service = ActivityDeployService(event_bus)
@@ -76,7 +77,7 @@ def create_app() -> Flask:
         data = request.json or {}
         plan_id = data.get("plan_id", "demo-plan")
         config = data.get("config", {}) or {}
-        return jsonify(config_cmd.create_or_update(plan_id, config))
+        return jsonify(config_cmd.create_or_update(plan_id, config))@app.post("/config/create")
     
     @app.get("/config/get")
     def config_get():
