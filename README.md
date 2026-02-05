@@ -52,4 +52,10 @@ GET /debug/session — Demonstração do padrão Factory Method
 
 POST /deploy — Registo do AP pela Inven!RA
 
+POST /config/create
+
+GET /config/get
+
+GET /debug/session
+
 Todos os endpoints devolvem respostas JSON e seguem uma arquitetura RESTful.
