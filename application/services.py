@@ -75,3 +75,20 @@ class SessionApplicationService:
             "questions": vm.questions,
             "criteria_weights": vm.criteria_weights,
         }
+
+
+class ConfigCommandService:
+    def __init__(self, repo) -> None:
+        self._repo = repo
+
+    def create_or_update(self, plan_id: str, config: Dict[str, Any]) -> Dict[str, Any]:
+        self._repo.save(plan_id, config or {})
+        return {"plan_id": plan_id, "stored_config": (config or {}), "status": "created"}
+
+
+class ConfigQueryService:
+    def __init__(self, repo) -> None:
+        self._repo = repo
+
+    def get(self, plan_id: str) -> Dict[str, Any]:
+        return {"plan_id": plan_id, "config": (self._repo.get(plan_id) or {})}
